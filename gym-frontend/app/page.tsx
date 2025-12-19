@@ -27,6 +27,7 @@ interface HistoryData {
 
 export default function Home() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [mounted, setMounted] = useState(false);
   const [cart, setCart] = useState<WorkoutSet[]>([]); 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -36,8 +37,12 @@ export default function Home() {
   const [reps, setReps] = useState('');
   const [rpe, setRpe] = useState('');
   
-  // NUEVO: Estado para guardar qué hiciste la última vez
   const [history, setHistory] = useState<HistoryData | null>(null);
+
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     fetch('https://gym-tracker-mhcl.onrender.com/exercices')
@@ -46,7 +51,6 @@ export default function Home() {
       .catch((error) => console.error("Error:", error));
   }, []);
 
-  // Modificamos la función de abrir modal para buscar el historial
   const openModal = (ex: Exercise) => {
     setSelectedExercise(ex);
     setWeight('');
@@ -54,8 +58,6 @@ export default function Home() {
     setRpe('');
     setHistory(null); // Reseteamos historial mientras carga
 
-    // NUEVO: Buscar historial al backend
-    // Asumimos user_id = 1 por ahora
     fetch(`https://gym-tracker-mhcl.onrender.com/history/1/${ex.id}`)
       .then(res => res.json())
       .then(data => setHistory(data))
@@ -107,7 +109,6 @@ export default function Home() {
     }
   };
 
-  // Función auxiliar para copiar el historial a los inputs actuales (UX rápida)
   const copyHistory = () => {
     if (history && history.found) {
       setWeight(history.weight?.toString() || '');
@@ -116,6 +117,10 @@ export default function Home() {
     }
   }
 
+  if (!mounted) {
+    return <div className="min-h-screen bg-black text-white p-10">Cargando Gym Manager...</div>;
+  }
+  
   return (
     <div className="min-h-screen bg-black text-white p-4 font-sans relative">
       <main className="max-w-md mx-auto pb-32">
