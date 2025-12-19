@@ -35,6 +35,8 @@ class Set(SetCreate):
     id: int
     workout_id: int
 
+    exercise: Optional[Exercise] = None
+
     class Config:
         from_attributes = True 
 

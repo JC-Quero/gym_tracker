@@ -1,6 +1,8 @@
+from sqlalchemy import desc
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, SessionLocal
 import models
@@ -11,6 +13,20 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+
+origins = [
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 # Dependencia: Esto nos da una sesión de base de datos por cada petición
 def get_db():
     db = SessionLocal()
@@ -20,6 +36,29 @@ def get_db():
         db.close()
 
 # --- RUTAS DE USUARIOS ---
+
+@app.get("/history/{user_id}/{exercise_id}")
+def get_exercise_history(user_id: int, exercise_id: int, db: Session = Depends(get_db)):
+    last_set = (
+        db.query(models.WorkoutSet)
+        .join(models.Workout)
+        .filter(models.Workout.user_id == user_id)
+        .filter(models.WorkoutSet.exercise_id == exercise_id)
+        .order_by(desc(models.Workout.date), desc(models.Workout.id))
+        .first()
+    )
+
+    if not last_set:
+        return{"found": False}
+
+    return{
+        "found": True,
+        "weight": last_set.weight,
+        "reps": last_set.reps,
+        "rpe": last_set.rpe,
+        "date": last_set.workout.date
+    }
+
 
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -83,3 +122,13 @@ def create_workout(workout: schemas.WorkoutCreate, db: Session = Depends(get_db)
 def read_workouts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     # Traemos los workouts (SQLAlchemy se encarga de traer los sets anidados gracias al ORM)
     return db.query(models.Workout).offset(skip).limit(limit).all()
+
+@app.get("/workouts/user/{user_id}", response_model=List[schemas.Workout])
+def read_user_workouts(user_id: int, db: Session = Depends(get_db)):
+    workouts = (
+        db.query(models.Workout)
+        .filter(models.Workout.user_id == user_id)
+        .order_by(desc(models.Workout.date), desc(models.Workout.id))
+        .all()
+    )
+    return workouts
