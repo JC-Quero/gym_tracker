@@ -40,7 +40,7 @@ export default function Home() {
   const [history, setHistory] = useState<HistoryData | null>(null);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/exercises/')
+    fetch('https://gym-tracker-mhcl.onrender.com/exercices')
       .then((res) => res.json())
       .then((data) => setExercises(data))
       .catch((error) => console.error("Error:", error));
@@ -56,7 +56,7 @@ export default function Home() {
 
     // NUEVO: Buscar historial al backend
     // Asumimos user_id = 1 por ahora
-    fetch(`http://127.0.0.1:8000/history/1/${ex.id}`)
+    fetch(`https://gym-tracker-mhcl.onrender.com/history/1/${ex.id}`)
       .then(res => res.json())
       .then(data => setHistory(data))
       .catch(err => console.error("No se pudo cargar historial", err));
@@ -89,7 +89,7 @@ export default function Home() {
           rpe: item.rpe
         }))
       };
-      const response = await fetch('http://127.0.0.1:8000/workouts/', {
+      const response = await fetch('https://gym-tracker-mhcl.onrender.com/workouts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

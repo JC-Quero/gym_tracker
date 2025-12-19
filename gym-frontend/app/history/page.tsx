@@ -24,7 +24,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     // Pedimos el historial del Usuario 1
-    fetch('http://127.0.0.1:8000/workouts/user/1')
+    fetch('https://gym-tracker-mhcl.onrender.com/workouts/user/1')
       .then((res) => res.json())
       .then((data) => setWorkouts(data))
       .catch((err) => console.error(err));
