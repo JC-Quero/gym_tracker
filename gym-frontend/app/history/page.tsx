@@ -21,15 +21,17 @@ interface Workout {
 
 export default function HistoryPage() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
-  
-  // 👇 TU URL DE RENDER YA CONFIGURADA
   const API_URL = 'https://gym-tracker-mhcl.onrender.com';
 
   useEffect(() => {
-    fetch(`${API_URL}/workouts/user/1`)
-      .then((res) => res.json())
-      .then((data) => setWorkouts(data))
-      .catch((err) => console.error(err));
+    const userId = localStorage.getItem('user_id');
+
+    if (userId) {
+      fetch(`${API_URL}/workouts/user/${userId}`)
+        .then((res) => res.json())
+        .then((data) => setWorkouts(data))
+        .catch((err) => console.error(err));
+    }
   }, []);
 
   return (

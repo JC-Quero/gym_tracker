@@ -35,9 +35,9 @@ export default function LoginPage() {
 
       const data = await res.json();
       
-      // GUARDAMOS EL TOKEN EN EL CELULAR
       localStorage.setItem('token', data.access_token);
-      localStorage.setItem('username', username);
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('user_id', data.user_id);
 
       // Redirigimos al inicio
       router.push('/');

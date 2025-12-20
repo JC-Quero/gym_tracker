@@ -41,11 +41,15 @@ export default function Home() {
   const [rpe, setRpe] = useState('');
   
   const [history, setHistory] = useState<HistoryData | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const API_URL = 'https://gym-tracker-mhcl.onrender.com'; 
 
   useEffect(() => {
     setMounted(true);
+
+    const storedId = localStorage.getItem('user_id');
+    setUserId(storedId);
 
     const token = localStorage.getItem('token')
     if(!token){
@@ -79,10 +83,14 @@ export default function Home() {
     setRpe('');
     setHistory(null);
 
-    fetch(`${API_URL}/history/1/${ex.id}`)
+
+
+    if (userId) { // Solo si tenemos ID
+     fetch(`${API_URL}/history/${userId}/${ex.id}`)
       .then(res => res.json())
       .then(data => setHistory(data))
-      .catch(err => console.error("No se pudo cargar historial", err));
+      .catch(err => console.error(err));
+    }
   };
 
   const addSetToCart = () => {
@@ -103,7 +111,7 @@ export default function Home() {
     setIsSaving(true);
     try {
       const payload = {
-        user_id: 1,
+        user_id: parseInt(userId || '0'),
         notes: "Entrenamiento Web",
         sets: cart.map(item => ({
           exercise_id: item.exercise_id,
