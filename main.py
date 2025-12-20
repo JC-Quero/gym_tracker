@@ -3,10 +3,11 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from database import engine, SessionLocal
 import models
 import schemas
+import auth
 
 # Crea las tablas
 models.Base.metadata.create_all(bind=engine)
@@ -60,13 +61,17 @@ def get_exercise_history(user_id: int, exercise_id: int, db: Session = Depends(g
 
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # 1. Crear el objeto modelo
-    db_user = models.User(username=user.username, role=user.role)
-    # 2. Agregarlo a la sesión
+
+    hashed_pwd = auth.get_password_hash(user.password)
+
+    db_user = models.User(
+        username=user.username, 
+        role=user.role,
+        hashed_password=hashed_pwd
+    )
+    
     db.add(db_user)
-    # 3. Guardar cambios (commit)
     db.commit()
-    # 4. Refrescar para obtener el ID generado
     db.refresh(db_user)
     return db_user
 
@@ -130,3 +135,19 @@ def read_user_workouts(user_id: int, db: Session = Depends(get_db)):
         .all()
     )
     return workouts
+
+@app.post("/token")
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.username == form_data.username).first()
+
+    if not user or not auth.verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=401,
+            detail="Usuario o contraseña incorrecta",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = auth.create_access_token(
+        data={"sub": user.username, "id": user.id, "role": user.role}
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}

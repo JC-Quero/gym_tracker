@@ -1,8 +1,33 @@
-from pydantic import BaseModel, ConfigDict 
+from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
 
-# --- 1. Esquemas para Ejercicios ---
+# ==========================================
+# 1. PARTE DE USUARIOS (El arreglo clave)
+# ==========================================
+
+# Base: Datos que comparten tanto la creación como la lectura
+class UserBase(BaseModel):
+    username: str
+    role: str = "alumno"
+
+# Create: Lo que necesitamos para crearlo (LLEVA PASSWORD)
+class UserCreate(UserBase):
+    password: str
+
+# Read: Lo que devolvemos al frontend (NO LLEVA PASSWORD)
+class User(UserBase):
+    id: int
+    # Al no heredar de UserCreate, no pide password.
+    # Y al no poner hashed_password acá, tampoco la mostramos. ¡Seguridad total!
+    
+    class Config:
+        from_attributes = True
+
+# ==========================================
+# 2. PARTE DE EJERCICIOS
+# ==========================================
+
 class ExerciseCreate(BaseModel):
     name: str
     category: str
@@ -11,20 +36,12 @@ class Exercise(ExerciseCreate):
     id: int
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
 
-# --- 2. Esquemas para Usuarios ---
-class UserCreate(BaseModel):
-    username: str
-    role: str = "alumno"
+# ==========================================
+# 3. PARTE DE SETS Y WORKOUTS
+# ==========================================
 
-class User(UserCreate):
-    id: int
-
-    class Config:
-        from_attributes = True 
-
-# --- 3. Esquemas para Sets ---
 class SetCreate(BaseModel):
     exercise_id: int
     reps: int
@@ -34,17 +51,15 @@ class SetCreate(BaseModel):
 class Set(SetCreate):
     id: int
     workout_id: int
-
-    exercise: Optional[Exercise] = None
+    exercise: Optional[Exercise] = None 
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
 
-# --- 4. Esquemas para Workouts ---
 class WorkoutCreate(BaseModel):
     user_id: int
     notes: Optional[str] = None
-    sets: List[SetCreate] = [] 
+    sets: List[SetCreate] = []
 
 class Workout(BaseModel):
     id: int
@@ -54,4 +69,4 @@ class Workout(BaseModel):
     sets: List[Set] = []
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
