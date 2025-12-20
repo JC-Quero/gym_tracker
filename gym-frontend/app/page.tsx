@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
@@ -25,6 +26,7 @@ interface HistoryData {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [errorMsg, setErrorMsg] = useState(''); 
   
@@ -40,11 +42,16 @@ export default function Home() {
   
   const [history, setHistory] = useState<HistoryData | null>(null);
 
-  // 👇 TU URL DE RENDER YA CONFIGURADA
   const API_URL = 'https://gym-tracker-mhcl.onrender.com'; 
 
   useEffect(() => {
     setMounted(true);
+
+    const token = localStorage.getItem('token')
+    if(!token){
+      router.push('/login');
+      return;
+    }
 
     fetch(`${API_URL}/exercises/`)
       .then((res) => {
