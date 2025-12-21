@@ -156,3 +156,16 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
         "user_id": user.id,       
         "username": user.username 
     }
+
+@app.delete("/workouts{workout_id}")
+def delete_workout(workout_id: int, db: Session = Depends(get_db)):
+    workout = db.query(models.Workout).filter(models.Workout.id == workout_id).first()
+
+    if not workout:
+        raise HTTPException(status_code=404, detail="Entrenamiento no encontrado")
+    
+    db.query(models.Set).filter(models.Set.workout_id == workout_id).delete()
+    db.delete(workout)
+    db.commit()
+
+    return {"message": "Eliminado con exito"}
