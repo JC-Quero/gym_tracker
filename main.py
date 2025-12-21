@@ -157,19 +157,26 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
         "username": user.username 
     }
 
+# --- BORRAR ENTRENAMIENTO (MODO DEBUG) ---
 @app.delete("/workouts/{workout_id}")
 def delete_workout(workout_id: int, db: Session = Depends(get_db)):
-    workout = db.query(models.Workout).filter(models.Workout.id == workout_id).first()
-    
-    if not workout:
-        raise HTTPException(status_code=404, detail="Entrenamiento no encontrado")
-    
-    sets_to_delete = db.query(models.Set).filter(models.Set.workout_id == workout_id).all()
-    
-    for s in sets_to_delete:
-        db.delete(s)
-    
-    db.delete(workout)
-    db.commit()
-    
-    return {"message": "Eliminado con éxito"}
+    try:
+        # 1. Buscamos el workout
+        workout = db.query(models.Workout).filter(models.Workout.id == workout_id).first()
+        
+        if not workout:
+            raise HTTPException(status_code=404, detail="Entrenamiento no encontrado")
+        
+        # 2. Borramos los sets manualmente
+        db.query(models.Set).filter(models.Set.workout_id == workout_id).delete()
+        
+        # 3. Borramos el workout
+        db.delete(workout)
+        db.commit()
+        
+        return {"message": "Eliminado con éxito"}
+
+    except Exception as e:
+        # AQUÍ ESTÁ EL TRUCO: Si algo falla, devolvemos el error exacto
+        print(f"ERROR BORRANDO: {e}") # Esto sale en los logs
+        raise HTTPException(status_code=400, detail=f"Error interno: {str(e)}")
